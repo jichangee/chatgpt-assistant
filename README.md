@@ -4,7 +4,7 @@ ChatGPT助理
 
 ### feature
 
-<url>/url?url=<需要总结的链接>
+总结网站内容：<url>/url?url=<需要总结的链接>
 
 ### 一键部署
 
