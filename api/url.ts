@@ -4,6 +4,7 @@ import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
 
 const CHAT_GPT_API_KEY = process.env.API_KEY || "";
+const BASE_URL = 'https://api.openai.com'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { url = "" } = req.query;
@@ -35,7 +36,7 @@ const message2Messages = (message) => {
 const sendMessageToChatGPT = async (message) => {
   const messages = message2Messages(message);
   return axios({
-    url: "https://api.openai.com/v1/chat/completions",
+    url: `${BASE_URL}/v1/chat/completions`,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${CHAT_GPT_API_KEY}`,
@@ -56,9 +57,7 @@ async function getChatGPTResult(url: string) {
     const text = await getUrlDocument(url);
     const doc = new JSDOM(text, {
       url,
-      contentType: "text/html",
-      includeNodeLocations: true,
-      storageQuota: 10000000,
+      contentType: "text/html"
     });
     const dom = doc.window.document;
     const article = new Readability(dom).parse();
