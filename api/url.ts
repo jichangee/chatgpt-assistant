@@ -8,6 +8,7 @@ const CHAT_GPT_API_KEY = process.env.API_KEY || ''
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { url = '' } = req.query
+  return res.json({ url })
   if (Array.isArray(url)) {
     return res.json({ err: 'url must be string' })
   }
@@ -39,19 +40,23 @@ const sendMessageToChatGPT = async (msg) => {
 }
 
 async function getChatGPTResult(url: string) {
-  const text = await getUrlDocument(url)
-  const doc = new JSDOM(text, {
-    url,
-    contentType: "text/html",
-    includeNodeLocations: true,
-    storageQuota: 10000000,
-  });
-  const dom = doc.window.document;
-  const article = new Readability(dom).parse();
-  if (article) {
-    const textContent = article.textContent
-    const chatGPTText = await sendMessageToChatGPT(`Please summarize this article in chinese. \n ` + textContent)
-    return chatGPTText
+  try {
+    const text = await getUrlDocument(url)
+    const doc = new JSDOM(text, {
+      url,
+      contentType: "text/html",
+      includeNodeLocations: true,
+      storageQuota: 10000000,
+    });
+    const dom = doc.window.document;
+    const article = new Readability(dom).parse();
+    if (article) {
+      const textContent = article.textContent
+      const chatGPTText = await sendMessageToChatGPT(`Please summarize this article in chinese. \n ` + textContent)
+      return chatGPTText
+    }
+    return Promise.reject(new Error('article is null'))
+  } catch (error) {
+    return Promise.reject(new Error(error))
   }
-  return Promise.reject()
 }
