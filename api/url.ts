@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import axios from "axios";
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
-import { message2Messages } from "../utils/openAI";
 
 const CHAT_GPT_API_KEY = process.env.API_KEY || "";
 
@@ -30,6 +29,9 @@ const getUrlDocument = (url): Promise<any> => {
   });
 };
 
+const message2Messages = (message) => {
+  return [{"role": "user", "content": message}]
+}
 const sendMessageToChatGPT = async (message) => {
   const messages = message2Messages(message);
   return axios({
