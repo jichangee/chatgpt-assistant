@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "@mozilla/readability": "^0.4.4",
     "axios": "^1.4.0",
