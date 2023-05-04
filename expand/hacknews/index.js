@@ -64,18 +64,22 @@ function start() {
     let limitCount = 0;
     for (const store of storeList) {
       const url = store.url;
-      const res = await summarizeArticleInChinese(url);
-      if (res.data.err) {
-        console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
+      if (url.indexOf('twitter.com') > -1) {
+        sendMessageByTG(url);
       } else {
-        sendMessageByTG(`${res.data.data}\n\n${url}`);
-        console.log("article\n", `${res.data.data}\n\n${url}\n\n\n`);
-        limitCount += 1;
-        if (limitCount >= 3) {
-          console.log("sleep 60s...");
-          // Limit: 3 / min
-          await sleep(limitCount * 20);
-          limitCount = 0;
+        const res = await summarizeArticleInChinese(url);
+        if (res.data.err) {
+          console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
+        } else {
+          sendMessageByTG(`${res.data.data}\n\n${url}`);
+          console.log("article\n", `${res.data.data}\n\n${url}\n\n\n`);
+          limitCount += 1;
+          if (limitCount >= 3) {
+            console.log("sleep 60s...");
+            // Limit: 3 / min
+            await sleep(limitCount * 20);
+            limitCount = 0;
+          }
         }
       }
     }
