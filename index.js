@@ -7,12 +7,14 @@ const API_KEY = dotenv.config().parsed.API_KEY;
 const app = express();
 
 const getUrlDocument = (url) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     axios({
       url,
     }).then((res) => {
       resolve(res.data);
-    });
+    }).catch(err => {
+      reject(err)
+    })
   });
 };
 
@@ -39,12 +41,29 @@ const sendMessageToChatGPT = async (message) => {
   });
 };
 
+function getErrorBody(message) {
+  return {
+    response: {
+      data: {
+        error: {
+          message,
+        },
+      },
+    },
+  };
+}
+
 //  words length   tokens
 //         19543     4247   4.6
 //         34648     7436   4.659
 
 async function getChatGPTResult(url) {
-  const text = await getUrlDocument(url);
+  let text = "";
+  try {
+    text = await getUrlDocument(url);
+  } catch (error) {
+    return Promise.reject(getErrorBody(JSON.stringify(error)));
+  }
   const doc = new JSDOM(text, {
     url,
     contentType: "text/html",
@@ -55,17 +74,13 @@ async function getChatGPTResult(url) {
   const article = new Readability(dom).parse();
   const textContent = article.textContent;
   if (textContent.length / 4.65 > 4096) {
-    return Promise.reject({
-      response: {
-        data: {
-          error: {
-            message: `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
-              textContent.length / 4.65
-            } tokens. Please reduce the length of the messages.`,
-          },
-        },
-      },
-    });
+    return Promise.reject(
+      getErrorBody(
+        `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
+          textContent.length / 4.65
+        } tokens. Please reduce the length of the messages.`
+      )
+    );
   }
   const chatGPTText = await sendMessageToChatGPT(
     `Please summarize this article in chinese. \n ${textContent}`
