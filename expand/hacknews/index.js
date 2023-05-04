@@ -85,4 +85,4 @@ function start() {
 
 start()
 
-setInterval(start, 120 * 60 * 1000);
+setInterval(start, 60 * 60 * 1000);
