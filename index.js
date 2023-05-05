@@ -74,6 +74,13 @@ async function getChatGPTResult(url) {
   const dom = doc.window.document;
   const article = new Readability(dom).parse();
   const textContent = article.textContent;
+  if (textContent.trim().length === 0) {
+    return Promise.reject(
+      getErrorBody(
+        `未找到网页中的文本`, '002'
+      )
+    );
+  }
   if (textContent.length / 4.65 > 4096) {
     return Promise.reject(
       getErrorBody(
@@ -96,7 +103,7 @@ app.get("/url", async (req, res) => {
   console.log("url", url);
   try {
     const chatGPText = await getChatGPTResult(url).catch((err) => {
-      res.send({ err: err.response.data.error.message });
+      res.send({ err: err.response.data.error });
       return;
     });
     res.send({ data: chatGPText });
