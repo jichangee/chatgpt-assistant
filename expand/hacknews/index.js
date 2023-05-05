@@ -69,6 +69,10 @@ function start() {
       } else {
         const res = await summarizeArticleInChinese(url);
         if (res.data.err) {
+          if (res.data.err.code === '001') {
+            // 文章字数超过限制，只发送url
+            sendMessageByTG(url);
+          }
           console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
         } else {
           sendMessageByTG(`${res.data.data}\n\n${url}`);

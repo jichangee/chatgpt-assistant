@@ -41,11 +41,12 @@ const sendMessageToChatGPT = async (message) => {
   });
 };
 
-function getErrorBody(message) {
+function getErrorBody(message, code = '000') {
   return {
     response: {
       data: {
         error: {
+          code,
           message,
         },
       },
@@ -78,7 +79,7 @@ async function getChatGPTResult(url) {
       getErrorBody(
         `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
           textContent.length / 4.65
-        } tokens. Please reduce the length of the messages.`
+        } tokens. Please reduce the length of the messages.`, '001'
       )
     );
   }
