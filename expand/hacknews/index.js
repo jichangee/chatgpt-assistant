@@ -28,13 +28,13 @@ function summarizeArticleInChinese(url) {
 
 async function getTopStoreList(topNum = 30) {
   let storeList = [];
-  const coe = new Date().getHours() * 5
   const res = await getTopStoriesIdList();
   const topList = res.data.slice(0, topNum).filter(id => !idsHistory.includes(id))
+  console.log(`找到${topList.length}个Id`);
   for (const id of topList) {
     const res = await getStoreDetail(id);
     const data = res.data;
-    if (data.score >= 81 - coe) {
+    if (data.score >= 50) {
       idsHistory.push(data.id);
       storeList.push(data);
     }
@@ -65,23 +65,23 @@ function start() {
     let limitCount = 0;
     for (const store of storeList) {
       const url = store.url;
+      const id = store.id;
       if (url.indexOf('twitter.com') > -1) {
-        sendMessageByTG(url);
+        sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
       } else {
         const res = await summarizeArticleInChinese(url);
         console.log('res.data', res.data);
         if (res.data.err) {
           if (res.data.err.code === '001') {
             // 文章字数超过限制，只发送url
-            sendMessageByTG(url);
+            sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
           } else if (res.data.err.code === '002') {
             // 未找到网页中的文本，只发送url
-            sendMessageByTG(url);
+            sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
           }
           console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
         } else {
-          sendMessageByTG(`${res.data.data}\n\n${url}`);
-          console.log("article\n", `${res.data.data}\n\n${url}\n\n\n`);
+          sendMessageByTG(`${res.data.data}\n\nLink: ${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
           limitCount += 1;
           if (limitCount >= 3) {
             console.log(`sleep ${limitCount * 20}s...`);
@@ -92,6 +92,7 @@ function start() {
         }
       }
     }
+    console.log(`已保存${idsHistory.length}个Id`);
     localStorage.setItem("ids-history", JSON.stringify(idsHistory));
   });
 }

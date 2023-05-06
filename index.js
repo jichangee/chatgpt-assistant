@@ -73,25 +73,25 @@ async function getChatGPTResult(url) {
   });
   const dom = doc.window.document;
   const article = new Readability(dom).parse();
-  const textContent = article.textContent;
-  if (textContent.trim().length === 0) {
+  const textContent = article.textContent.substring(0, 19000).trim()
+  if (textContent.length === 0) {
     return Promise.reject(
       getErrorBody(
         `未找到网页中的文本`, '002'
       )
     );
   }
-  if (textContent.length / 4.65 > 4096) {
-    return Promise.reject(
-      getErrorBody(
-        `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
-          textContent.length / 4.65
-        } tokens. Please reduce the length of the messages.`, '001'
-      )
-    );
-  }
+  // if (textContent.length / 4.65 > 4096) {
+  //   return Promise.reject(
+  //     getErrorBody(
+  //       `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
+  //         textContent.length / 4.65
+  //       } tokens. Please reduce the length of the messages.`, '001'
+  //     )
+  //   );
+  // }
   const chatGPTText = await sendMessageToChatGPT(
-    `Please summarize this article in chinese. \n ${textContent}`
+    `${textContent} \n------\n请使用中文总结这篇文章。`
   ).catch((err) => {
     return Promise.reject(err);
   });
