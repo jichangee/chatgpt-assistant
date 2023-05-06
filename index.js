@@ -58,7 +58,16 @@ function getErrorBody(message, code = '000') {
 //         19543     4247   4.6
 //         34648     7436   4.659
 
-async function getChatGPTResult(url) {
+async function getChatGPTResult(textContent) {
+  const chatGPTText = await sendMessageToChatGPT(
+    `${textContent} \n------\n请使用中文总结这篇文章。`
+  ).catch((err) => {
+    return Promise.reject(getErrorBody(JSON.stringify(err)));
+  });
+  return chatGPTText;
+}
+
+async function getWebsiteTextContent(url) {
   let text = "";
   try {
     text = await getUrlDocument(url);
@@ -81,30 +90,33 @@ async function getChatGPTResult(url) {
       )
     );
   }
-  // if (textContent.length / 4.65 > 4096) {
-  //   return Promise.reject(
-  //     getErrorBody(
-  //       `Custom: This model's maximum context length is 4097 tokens. However, your messages resulted in ${
-  //         textContent.length / 4.65
-  //       } tokens. Please reduce the length of the messages.`, '001'
-  //     )
-  //   );
-  // }
-  const chatGPTText = await sendMessageToChatGPT(
-    `${textContent} \n------\n请使用中文总结这篇文章。`
-  ).catch((err) => {
-    return Promise.reject(err);
-  });
-  return chatGPTText;
+  return textContent
 }
+
+app.get('/url/score', async (req, res) => {
+  const { url } = req.query;
+  try {
+    const textContent = await getWebsiteTextContent(url).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    const chatGPText = await getChatGPTResult(textContent).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    res.send({ data: chatGPText });
+  } catch (error) {
+    console.log("error", JSON.stringify(error));
+  }
+})
 
 app.get("/url", async (req, res) => {
   const { url } = req.query;
   console.log("url", url);
   try {
-    const chatGPText = await getChatGPTResult(url).catch((err) => {
-      res.send({ err: err.response.data.error });
-      return;
+    const textContent = await getWebsiteTextContent(url).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    const chatGPText = await getChatGPTResult(textContent).catch((err) => {
+      return res.send({ err: err.response.data.error });
     });
     res.send({ data: chatGPText });
   } catch (error) {
