@@ -34,7 +34,7 @@ async function getTopStoreList(topNum = 30) {
   for (const id of topList) {
     const res = await getStoreDetail(id);
     const data = res.data;
-    if (data.score >= 50) {
+    if (data.score >= 80) {
       idsHistory.push(data.id);
       storeList.push(data);
     }
