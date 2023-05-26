@@ -34,7 +34,7 @@ async function getTopStoreList(topNum = 30) {
   for (const id of topList) {
     const res = await getStoreDetail(id);
     const data = res.data;
-    if (data.score >= 80) {
+    if (data.score >= 100) {
       idsHistory.push(data.id);
       storeList.push(data);
     }
@@ -60,7 +60,7 @@ function sendMessageByTG(text) {
 }
 
 function start() {
-  getTopStoreList(30).then(async (storeList) => {
+  getTopStoreList(60).then(async (storeList) => {
     console.log(`找到${storeList.length}篇新文章`);
     let limitCount = 0;
     for (const store of storeList) {
@@ -82,21 +82,20 @@ function start() {
           console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
         } else {
           sendMessageByTG(`${res.data.data}\n\nLink: ${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
-          limitCount += 1;
-          if (limitCount >= 3) {
-            console.log(`sleep ${limitCount * 20}s...`);
-            // Limit: 3 / min
-            await sleep(limitCount * 20);
-            limitCount = 0;
-          }
+        }
+        limitCount += 1;
+        if (limitCount >= 3) {
+          console.log(`sleep ${limitCount * 20}s...`);
+          // Limit: 3 / min
+          await sleep(limitCount * 20);
+          limitCount = 0;
         }
       }
     }
-    console.log(`已保存${idsHistory.length}个Id`);
-    localStorage.setItem("ids-history", JSON.stringify(idsHistory));
+    localStorage.setItem("ids-history", JSON.stringify(idsHistory.slice(storeList.length)));
   });
 }
 
 start()
 
-setInterval(start, 30 * 60 * 1000);
+setInterval(start, 60 * 60 * 1000);

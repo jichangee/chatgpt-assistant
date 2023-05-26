@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "pm2 start index.js && pm2 start .\\expand\\hacknews\\index.js"
   },
   "dependencies": {
     "@mozilla/readability": "^0.4.4",
