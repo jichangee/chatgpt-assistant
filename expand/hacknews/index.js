@@ -2,6 +2,8 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { LocalStorage } from "node-localstorage";
 const { TG_BOT_TOKEN, TG_CHAT_ID } = dotenv.config().parsed;
+const MIN_SCORE = 130
+const MAX_LIST_LENGTH = 30
 
 const localStorage = new LocalStorage("./scratch");
 
@@ -30,11 +32,11 @@ async function getTopStoreList(topNum = 30) {
   let storeList = [];
   const res = await getTopStoriesIdList();
   const topList = res.data.slice(0, topNum).filter(id => !idsHistory.includes(id))
-  console.log(`找到${topList.length}个Id`);
+  console.log(`找到${topList.length}个Id`, topList);
   for (const id of topList) {
     const res = await getStoreDetail(id);
     const data = res.data;
-    if (data.score >= 100) {
+    if (data.score >= MIN_SCORE) {
       idsHistory.push(data.id);
       storeList.push(data);
     }
@@ -59,8 +61,13 @@ function sendMessageByTG(text) {
   });
 }
 
+function dealUnknownError(id) {
+  storeList = storeList.filter(item => item.id !== id)
+  idsHistory = idsHistory.filter(item => item !== id)
+}
+
 function start() {
-  getTopStoreList(60).then(async (storeList) => {
+  getTopStoreList(MAX_LIST_LENGTH).then(async (storeList) => {
     console.log(`找到${storeList.length}篇新文章`);
     let limitCount = 0;
     for (const store of storeList) {
@@ -69,7 +76,9 @@ function start() {
       if (url.indexOf('twitter.com') > -1) {
         sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
       } else {
-        const res = await summarizeArticleInChinese(url);
+        const res = await summarizeArticleInChinese(url).catch(() => {
+          dealUnknownError(id)
+        });
         console.log('res.data', res.data);
         if (res.data.err) {
           if (res.data.err.code === '001') {
@@ -78,6 +87,9 @@ function start() {
           } else if (res.data.err.code === '002') {
             // 未找到网页中的文本，只发送url
             sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
+          } else {
+            // 未知错误，先不记录
+            dealUnknownError(id)
           }
           console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
         } else {
