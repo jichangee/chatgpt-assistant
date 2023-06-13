@@ -34,12 +34,16 @@ async function getTopStoreList(topNum = 30) {
   const topList = res.data.slice(0, topNum).filter(id => !idsHistory.includes(id))
   console.log(`找到${topList.length}个Id`, topList);
   for (const id of topList) {
-    const res = await getStoreDetail(id);
-    const data = res.data;
-    if (data.score >= MIN_SCORE) {
-      idsHistory.push(data.id);
-      storeList.push(data);
-    }
+    const res = await getStoreDetail(id).catch(err => {
+      console.log('hacknews detail error', err);
+    });
+    try {
+      const data = res.data;
+      if (data.score >= MIN_SCORE) {
+        idsHistory.push(data.id);
+        storeList.push(data);
+      }
+    } catch (error) { }
   }
   return storeList;
 }
@@ -62,7 +66,6 @@ function sendMessageByTG(text) {
 }
 
 function dealUnknownError(id) {
-  storeList = storeList.filter(item => item.id !== id)
   idsHistory = idsHistory.filter(item => item !== id)
 }
 
