@@ -2,7 +2,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { LocalStorage } from "node-localstorage";
 const { TG_BOT_TOKEN, TG_CHAT_ID } = dotenv.config().parsed;
-const MIN_SCORE = 130
+const MIN_SCORE = 150
 const MAX_LIST_LENGTH = 30
 
 const localStorage = new LocalStorage("./scratch");
