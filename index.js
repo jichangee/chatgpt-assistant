@@ -6,10 +6,17 @@ import { JSDOM } from "jsdom";
 const API_KEY = dotenv.config().parsed.API_KEY;
 const app = express();
 
+const BASE_URL = 'https://gptapi.us'
+
 const getUrlDocument = (url) => {
+  console.log('url document', url);
   return new Promise((resolve, reject) => {
     axios({
       url,
+      headers: {
+        "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"'
+      }
     }).then((res) => {
       resolve(res.data);
     }).catch(err => {
@@ -25,7 +32,7 @@ const message2Messages = (message) => {
 const sendMessageToChatGPT = async (message) => {
   const messages = message2Messages(message);
   return axios({
-    url: "https://api.openai.com/v1/chat/completions",
+    url: `${BASE_URL}/v1/chat/completions`,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${API_KEY}`,
@@ -103,6 +110,18 @@ app.get('/url/score', async (req, res) => {
       return res.send({ err: err.response.data.error });
     });
     res.send({ data: chatGPText });
+  } catch (error) {
+    console.log("error", JSON.stringify(error));
+  }
+})
+
+app.get('/url/content', async (req, res) => {
+  const { url } = req.query;
+  try {
+    const textContent = await getWebsiteTextContent(url).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    res.send({ data: textContent });
   } catch (error) {
     console.log("error", JSON.stringify(error));
   }
