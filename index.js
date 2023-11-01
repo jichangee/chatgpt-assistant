@@ -67,7 +67,7 @@ function getErrorBody(message, code = '000') {
 
 async function getChatGPTResult(textContent) {
   const chatGPTText = await sendMessageToChatGPT(
-    `${textContent} \n------\n请分别用中文和英文总结这篇文章。`
+    `请用中文总结这篇文章 \n------\n${textContent}`
   ).catch((err) => {
     return Promise.reject(getErrorBody(JSON.stringify(err)));
   });
