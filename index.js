@@ -65,9 +65,9 @@ function getErrorBody(message, code = '000') {
 //         19543     4247   4.6
 //         34648     7436   4.659
 
-async function getChatGPTResult(textContent) {
+async function getChatGPTResult(textContent, pretext) {
   const chatGPTText = await sendMessageToChatGPT(
-    `请用中文总结这篇文章 \n------\n${textContent}`
+    `${pretext}${textContent}`
   ).catch((err) => {
     return Promise.reject(getErrorBody(JSON.stringify(err)));
   });
@@ -106,7 +106,7 @@ app.get('/url/score', async (req, res) => {
     const textContent = await getWebsiteTextContent(url).catch((err) => {
       return res.send({ err: err.response.data.error });
     });
-    const chatGPText = await getChatGPTResult(textContent).catch((err) => {
+    const chatGPText = await getChatGPTResult(textContent, '请用中文总结以下内容 \n------\n').catch((err) => {
       return res.send({ err: err.response.data.error });
     });
     res.send({ data: chatGPText });
@@ -127,6 +127,31 @@ app.get('/url/content', async (req, res) => {
   }
 })
 
+app.get("/title", async (req, res) => {
+  const { url } = req.query;
+  try {
+    const textContent = await getWebsiteTextContent(url).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    const chatGPText = await getChatGPTResult(textContent, '请用中文给以下内容起一个标题 \n------\n').catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    res.send({ data: chatGPText });
+  } catch (error) {
+    console.log("error", JSON.stringify(error));
+  }
+});
+app.get("/text", async (req, res) => {
+  const { text } = req.query;
+  try {
+    const chatGPText = await getChatGPTResult(text).catch((err) => {
+      return res.send({ err: err.response.data.error });
+    });
+    res.send({ data: chatGPText });
+  } catch (error) {
+    res.send({ err: JSON.stringify(error) });
+  }
+});
 app.get("/url", async (req, res) => {
   const { url } = req.query;
   console.log("url", url);
@@ -134,7 +159,7 @@ app.get("/url", async (req, res) => {
     const textContent = await getWebsiteTextContent(url).catch((err) => {
       return res.send({ err: err.response.data.error });
     });
-    const chatGPText = await getChatGPTResult(textContent).catch((err) => {
+    const chatGPText = await getChatGPTResult(textContent, '请用中文总结以下内容 \n------\n').catch((err) => {
       return res.send({ err: err.response.data.error });
     });
     res.send({ data: chatGPText });

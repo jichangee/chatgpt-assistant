@@ -2,8 +2,9 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { LocalStorage } from "node-localstorage";
 const { TG_BOT_TOKEN, TG_CHAT_ID } = dotenv.config().parsed;
-const MIN_SCORE = 150
-const MAX_LIST_LENGTH = 30
+const MIN_SCORE = 180
+const MAX_LIST_LENGTH = 20
+const ONCE_SLEEP_SECOND = 0
 
 const localStorage = new LocalStorage("./scratch");
 
@@ -26,6 +27,9 @@ function getStoreDetail(id) {
 
 function summarizeArticleInChinese(url) {
   return axios.get(`http://127.0.0.1:8001/url/?url=${url}`);
+}
+function summarizeTitleInChinese(url) {
+  return axios.get(`http://127.0.0.1:8001/title/?url=${url}`);
 }
 
 async function getTopStoreList(topNum = 30) {
@@ -76,33 +80,34 @@ function start() {
     for (const store of storeList) {
       const url = store.url;
       const id = store.id;
-      if (url.indexOf('twitter.com') > -1) {
-        sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
-      } else {
-        const res = await summarizeArticleInChinese(url).catch(() => {
+      if (url && url.indexOf('twitter.com') > -1) {
+        sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}\nScore: ${store.score}`);
+      } else if (url) {
+        const res = await summarizeTitleInChinese(url).catch(() => {
           dealUnknownError(id)
         });
-        console.log('res.data', res.data);
-        if (res.data.err) {
-          if (res.data.err.code === '001') {
+        const data = res.data
+        if (data.err) {
+          if (data.err.code === '001') {
             // 文章字数超过限制，只发送url
             sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
-          } else if (res.data.err.code === '002') {
+          } else if (data.err.code === '002') {
             // 未找到网页中的文本，只发送url
             sendMessageByTG(`${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
           } else {
             // 未知错误，先不记录
             dealUnknownError(id)
           }
-          console.error("err", `${JSON.stringify(res.data)}\n\n\n`);
+          console.error("err", `${JSON.stringify(data)}\n\n\n`);
         } else {
-          sendMessageByTG(`${res.data.data}\n\nLink: ${url}\nComments: https://news.ycombinator.com/item?id=${id}`);
+          const text = data.data.replace('标题建议：', '').replace('标题：', '')
+          sendMessageByTG(`${text}\n\nLink: ${url}\nComments: https://news.ycombinator.com/item?id=${id}\nScore: ${store.score}`);
         }
         limitCount += 1;
         if (limitCount >= 3) {
-          console.log(`sleep ${limitCount * 20}s...`);
+          console.log(`sleep ${limitCount * ONCE_SLEEP_SECOND}s...`);
           // Limit: 3 / min
-          await sleep(limitCount * 20);
+          await sleep(limitCount * ONCE_SLEEP_SECOND);
           limitCount = 0;
         }
       }
